@@ -1,0 +1,54 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: webhook
+spec:
+  template:
+    serviceAccountName: argo-events-sa
+  dependencies:
+    - name: soner-scan-webhook 
+      eventSourceName: webhook
+      eventName: bitbucket
+  triggers:
+    - template:
+        name: webhook-workflow-trigger
+        k8s:
+          group: argoproj.io
+          version: v1alpha1
+          resource: workflows
+          operation: create
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: soner-scan-webhook 
+              spec:
+                entrypoint: soner-scan
+                templates:
+                  - name: soner-scan
+                    dag:
+                      tasks:
+                        - name: sonarscanner
+                          template: getallrepo
+                        - name: slack-notify
+                          template: slack-notify
+                          dependencies: [sonarscanner]
+
+                  - name: slack-notify
+                    script:
+                      image: slack-notify:latest
+                      command: [bash]
+                      source: |
+                        <changeme>
+                        ./slack-notify
+
+                  - name: getallrepo
+                    script:
+                      image: sonar-qube-base:latest
+                      command: [bash]
+                      source: |
+                        <changeme>  
+
+
+

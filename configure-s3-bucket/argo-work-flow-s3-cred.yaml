@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: argo-work-flow-s3-cred
+type: Opaque
+data:
+  accessKey: <base64>
+  secretKey: <base64>
